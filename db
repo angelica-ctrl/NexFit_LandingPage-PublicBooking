@@ -1,0 +1,338 @@
+-- ============================================================
+-- NexFit Database Schema
+-- Generated from Laravel migrations (root project)
+-- Fit Urban Fitness Studio - Booking / Trainer / PAR-Q System
+-- ============================================================
+
+SET FOREIGN_KEY_CHECKS = 0;
+SET NAMES utf8mb4;
+
+CREATE DATABASE IF NOT EXISTS `nexfit` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `nexfit`;
+
+-- ------------------------------------------------------------
+-- Laravel default tables
+-- ------------------------------------------------------------
+
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE `users` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(255) NOT NULL,
+  `email_verified_at` TIMESTAMP NULL DEFAULT NULL,
+  `password` VARCHAR(255) NOT NULL,
+  `remember_token` VARCHAR(100) NULL DEFAULT NULL,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `users_email_unique` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `password_reset_tokens`;
+CREATE TABLE `password_reset_tokens` (
+  `email` VARCHAR(255) NOT NULL,
+  `token` VARCHAR(255) NOT NULL,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `sessions`;
+CREATE TABLE `sessions` (
+  `id` VARCHAR(255) NOT NULL,
+  `user_id` BIGINT UNSIGNED NULL DEFAULT NULL,
+  `ip_address` VARCHAR(45) NULL DEFAULT NULL,
+  `user_agent` TEXT NULL DEFAULT NULL,
+  `payload` LONGTEXT NOT NULL,
+  `last_activity` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `sessions_user_id_index` (`user_id`),
+  KEY `sessions_last_activity_index` (`last_activity`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `cache`;
+CREATE TABLE `cache` (
+  `key` VARCHAR(255) NOT NULL,
+  `value` MEDIUMTEXT NOT NULL,
+  `expiration` INT NOT NULL,
+  PRIMARY KEY (`key`),
+  KEY `cache_expiration_index` (`expiration`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `cache_locks`;
+CREATE TABLE `cache_locks` (
+  `key` VARCHAR(255) NOT NULL,
+  `owner` VARCHAR(255) NOT NULL,
+  `expiration` INT NOT NULL,
+  PRIMARY KEY (`key`),
+  KEY `cache_locks_expiration_index` (`expiration`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `jobs`;
+CREATE TABLE `jobs` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `queue` VARCHAR(255) NOT NULL,
+  `payload` LONGTEXT NOT NULL,
+  `attempts` TINYINT UNSIGNED NOT NULL,
+  `reserved_at` INT UNSIGNED NULL DEFAULT NULL,
+  `available_at` INT UNSIGNED NOT NULL,
+  `created_at` INT UNSIGNED NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `jobs_queue_index` (`queue`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `job_batches`;
+CREATE TABLE `job_batches` (
+  `id` VARCHAR(255) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `total_jobs` INT NOT NULL,
+  `pending_jobs` INT NOT NULL,
+  `failed_jobs` INT NOT NULL,
+  `failed_job_ids` LONGTEXT NOT NULL,
+  `options` MEDIUMTEXT NULL DEFAULT NULL,
+  `cancelled_at` INT NULL DEFAULT NULL,
+  `created_at` INT NOT NULL,
+  `finished_at` INT NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `failed_jobs`;
+CREATE TABLE `failed_jobs` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `uuid` VARCHAR(255) NOT NULL,
+  `connection` TEXT NOT NULL,
+  `queue` TEXT NOT NULL,
+  `payload` LONGTEXT NOT NULL,
+  `exception` LONGTEXT NOT NULL,
+  `failed_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `failed_jobs_uuid_unique` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- NexFit application tables
+-- ------------------------------------------------------------
+
+DROP TABLE IF EXISTS `services`;
+CREATE TABLE `services` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(255) NOT NULL,                       -- 'Personal Training' | 'Pilates' | 'Open Gym Access'
+  `description` TEXT NULL DEFAULT NULL,
+  `open_time` TIME NOT NULL DEFAULT '05:00:00',
+  `close_time` TIME NOT NULL DEFAULT '22:00:00',
+  `requires_trainer` TINYINT(1) NOT NULL DEFAULT 1,
+  `requires_program` TINYINT(1) NOT NULL DEFAULT 1,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `services_name_unique` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `fitness_assessments`;
+CREATE TABLE `fitness_assessments` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `full_name` VARCHAR(255) NOT NULL,
+  `date_of_birth` DATE NULL DEFAULT NULL,
+  `gender` ENUM('Male','Female','Other') NULL DEFAULT NULL,
+  `phone_number` VARCHAR(255) NULL DEFAULT NULL,
+  `email` VARCHAR(255) NULL DEFAULT NULL,
+  `emergency_contact_name` VARCHAR(255) NULL DEFAULT NULL,
+  `emergency_contact_number` VARCHAR(255) NULL DEFAULT NULL,
+  `emergency_contact_relationship` VARCHAR(255) NULL DEFAULT NULL,
+  `exercise_experience` ENUM('beginner','intermediate','advanced') NOT NULL DEFAULT 'beginner',
+  `currently_exercising` TINYINT(1) NOT NULL DEFAULT 0,
+  `exercise_frequency` VARCHAR(255) NULL DEFAULT NULL,
+  `exercise_type` JSON NULL DEFAULT NULL,
+  `exercise_other` VARCHAR(255) NULL DEFAULT NULL,
+  `interested_in` VARCHAR(255) NULL DEFAULT NULL,     -- 'Personal Training' | 'Pilates' | 'Open Gym Access'
+  `fitness_goal` VARCHAR(255) NULL DEFAULT NULL,       -- drives trainer recommendation
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `medical_histories`;
+CREATE TABLE `medical_histories` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `fitness_assessment_id` BIGINT UNSIGNED NOT NULL,
+  `chronic_illness` TINYINT(1) NULL DEFAULT 0,
+  `chronic_illness_details` TEXT NULL DEFAULT NULL,
+  `major_surgery` TINYINT(1) NULL DEFAULT 0,
+  `major_surgery_details` TEXT NULL DEFAULT NULL,
+  `current_medications` TINYINT(1) NULL DEFAULT 0,
+  `medication_name` VARCHAR(255) NULL DEFAULT NULL,
+  `interested_in` VARCHAR(255) NULL DEFAULT NULL,      -- mirrors assessment.interested_in
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `medical_histories_fitness_assessment_id_foreign` (`fitness_assessment_id`),
+  CONSTRAINT `medical_histories_fitness_assessment_id_foreign`
+    FOREIGN KEY (`fitness_assessment_id`) REFERENCES `fitness_assessments` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `parq_responses`;
+CREATE TABLE `parq_responses` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `fitness_assessment_id` BIGINT UNSIGNED NOT NULL,
+  `heart_condition` TINYINT(1) NOT NULL DEFAULT 0,
+  `chest_pain_activity` TINYINT(1) NOT NULL DEFAULT 0,
+  `chest_pain_rest` TINYINT(1) NOT NULL DEFAULT 0,
+  `dizziness_balance` TINYINT(1) NOT NULL DEFAULT 0,
+  `bone_joint_condition` TINYINT(1) NOT NULL DEFAULT 0,
+  `blood_pressure_medication` TINYINT(1) NOT NULL DEFAULT 0,
+  `other_medical_reason` TINYINT(1) NOT NULL DEFAULT 0,
+  `medical_clearance_required` TINYINT(1) NOT NULL DEFAULT 0,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `parq_responses_fitness_assessment_id_foreign` (`fitness_assessment_id`),
+  CONSTRAINT `parq_responses_fitness_assessment_id_foreign`
+    FOREIGN KEY (`fitness_assessment_id`) REFERENCES `fitness_assessments` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `trainers`;
+CREATE TABLE `trainers` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(255) NULL DEFAULT NULL,
+  `phone` VARCHAR(255) NULL DEFAULT NULL,
+  `specialization` VARCHAR(255) NULL DEFAULT NULL,     -- 'Personal Training' | 'Pilates' | 'Both'
+  `trainer_level` ENUM('Beginner','Intermediate','Advanced') NOT NULL DEFAULT 'Beginner',
+  `is_available` TINYINT(1) NOT NULL DEFAULT 1,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `trainers_email_unique` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `programs`;
+CREATE TABLE `programs` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `service_id` BIGINT UNSIGNED NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `level` ENUM('Beginner','Intermediate','Advanced') NOT NULL DEFAULT 'Beginner',
+  `type` VARCHAR(255) NULL DEFAULT NULL,               -- mirrors service name
+  `description` TEXT NULL DEFAULT NULL,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `programs_service_id_foreign` (`service_id`),
+  CONSTRAINT `programs_service_id_foreign`
+    FOREIGN KEY (`service_id`) REFERENCES `services` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `schedules`;
+CREATE TABLE `schedules` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `trainer_id` BIGINT UNSIGNED NULL DEFAULT NULL,      -- NULL = open gym slot
+  `service_id` BIGINT UNSIGNED NULL DEFAULT NULL,
+  `date` DATE NOT NULL,
+  `start_time` TIME NOT NULL,
+  `end_time` TIME NOT NULL,
+  `max_capacity` INT UNSIGNED NOT NULL DEFAULT 1,
+  `booked_count` INT UNSIGNED NOT NULL DEFAULT 0,
+  `is_full` TINYINT(1) NOT NULL DEFAULT 0,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `schedules_trainer_id_date_start_time_unique` (`trainer_id`, `date`, `start_time`),
+  KEY `schedules_service_id_foreign` (`service_id`),
+  CONSTRAINT `schedules_trainer_id_foreign`
+    FOREIGN KEY (`trainer_id`) REFERENCES `trainers` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `schedules_service_id_foreign`
+    FOREIGN KEY (`service_id`) REFERENCES `services` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `trainer_service`;
+CREATE TABLE `trainer_service` (
+  `trainer_id` BIGINT UNSIGNED NOT NULL,
+  `service_id` BIGINT UNSIGNED NOT NULL,
+  PRIMARY KEY (`trainer_id`, `service_id`),
+  KEY `trainer_service_service_id_foreign` (`service_id`),
+  CONSTRAINT `trainer_service_trainer_id_foreign`
+    FOREIGN KEY (`trainer_id`) REFERENCES `trainers` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `trainer_service_service_id_foreign`
+    FOREIGN KEY (`service_id`) REFERENCES `services` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `bookings`;
+CREATE TABLE `bookings` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `fitness_assessment_id` BIGINT UNSIGNED NOT NULL,
+  `service_id` BIGINT UNSIGNED NOT NULL,
+  `trainer_id` BIGINT UNSIGNED NULL DEFAULT NULL,       -- NULL for Open Gym
+  `backup_trainer_id` BIGINT UNSIGNED NULL DEFAULT NULL,
+  `program_id` BIGINT UNSIGNED NULL DEFAULT NULL,       -- NULL for Open Gym
+  `schedule_id` BIGINT UNSIGNED NULL DEFAULT NULL,
+  `booking_date` DATE NOT NULL,
+  `booking_time` TIME NOT NULL,
+  `status` ENUM('Pending','Confirmed','Cancelled','Rescheduled','Walk-in') NOT NULL DEFAULT 'Pending',
+  `medical_clearance_acknowledged` TINYINT(1) NOT NULL DEFAULT 0,
+  `rights_policy_acknowledged` TINYINT(1) NOT NULL DEFAULT 0,
+  `member_declaration_signed` TINYINT(1) NOT NULL DEFAULT 0,
+  `notes` TEXT NULL DEFAULT NULL,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `bookings_service_id_foreign` (`service_id`),
+  KEY `bookings_trainer_id_foreign` (`trainer_id`),
+  KEY `bookings_backup_trainer_id_foreign` (`backup_trainer_id`),
+  KEY `bookings_program_id_foreign` (`program_id`),
+  KEY `bookings_schedule_id_foreign` (`schedule_id`),
+  CONSTRAINT `bookings_fitness_assessment_id_foreign`
+    FOREIGN KEY (`fitness_assessment_id`) REFERENCES `fitness_assessments` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `bookings_service_id_foreign`
+    FOREIGN KEY (`service_id`) REFERENCES `services` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `bookings_trainer_id_foreign`
+    FOREIGN KEY (`trainer_id`) REFERENCES `trainers` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `bookings_backup_trainer_id_foreign`
+    FOREIGN KEY (`backup_trainer_id`) REFERENCES `trainers` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `bookings_program_id_foreign`
+    FOREIGN KEY (`program_id`) REFERENCES `programs` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `bookings_schedule_id_foreign`
+    FOREIGN KEY (`schedule_id`) REFERENCES `schedules` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `walk_in_inquiries`;
+CREATE TABLE `walk_in_inquiries` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `fitness_assessment_id` BIGINT UNSIGNED NULL DEFAULT NULL,
+  `full_name` VARCHAR(255) NOT NULL,
+  `phone` VARCHAR(255) NULL DEFAULT NULL,
+  `email` VARCHAR(255) NULL DEFAULT NULL,
+  `interested_in` VARCHAR(255) NULL DEFAULT NULL,
+  `notes` TEXT NULL DEFAULT NULL,
+  `followed_up` TINYINT(1) NOT NULL DEFAULT 0,
+  `followed_up_at` TIMESTAMP NULL DEFAULT NULL,
+  `followed_up_by` VARCHAR(255) NULL DEFAULT NULL,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `walk_in_inquiries_fitness_assessment_id_foreign` (`fitness_assessment_id`),
+  CONSTRAINT `walk_in_inquiries_fitness_assessment_id_foreign`
+    FOREIGN KEY (`fitness_assessment_id`) REFERENCES `fitness_assessments` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `audit_logs`;
+CREATE TABLE `audit_logs` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT UNSIGNED NULL DEFAULT NULL,          -- NULL for public (non-logged-in) actions
+  `auditable_type` VARCHAR(255) NOT NULL,               -- e.g. 'Booking'
+  `auditable_id` BIGINT UNSIGNED NOT NULL,
+  `action` VARCHAR(255) NOT NULL,                        -- created | updated | cancelled | confirmed | rescheduled
+  `old_values` JSON NULL DEFAULT NULL,
+  `new_values` JSON NULL DEFAULT NULL,
+  `ip_address` VARCHAR(255) NULL DEFAULT NULL,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `audit_logs_user_id_foreign` (`user_id`),
+  KEY `audit_logs_auditable_type_auditable_id_index` (`auditable_type`, `auditable_id`),
+  CONSTRAINT `audit_logs_user_id_foreign`
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SET FOREIGN_KEY_CHECKS = 1;
